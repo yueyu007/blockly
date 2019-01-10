@@ -19,7 +19,8 @@
  */
 
 /**
- * @fileoverview Utility methods for working with the closure menu (goog.ui.menu).
+ * @fileoverview Utility methods for working with the closure menu
+ * (goog.ui.menu).
  * @author fenichel@google.com (Rachel Fenichel)
  */
 'use strict';
@@ -27,8 +28,9 @@
 /**
  * @name Blockly.utils.uiMenu
  * @namespace
- **/
+ */
 goog.provide('Blockly.utils.uiMenu');
+
 
 /**
  * Get the size of a rendered goog.ui.Menu.

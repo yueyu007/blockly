@@ -30,9 +30,11 @@
 /**
  * @name Blockly.Extensions
  * @namespace
- **/
+ */
 goog.provide('Blockly.Extensions');
 
+goog.require('Blockly.Mutator');
+goog.require('Blockly.utils');
 
 /**
  * The set of all registered extensions, keyed by extension name/id.
@@ -51,14 +53,14 @@ Blockly.Extensions.ALL_ = {};
  *     registered, or extensionFn is not a function.
  */
 Blockly.Extensions.register = function(name, initFn) {
-  if (!goog.isString(name) || goog.string.isEmptyOrWhitespace(name)) {
-    throw new Error('Error: Invalid extension name "' + name + '"');
+  if ((typeof name != 'string') || (name.trim() == '')) {
+    throw Error('Error: Invalid extension name "' + name + '"');
   }
   if (Blockly.Extensions.ALL_[name]) {
-    throw new Error('Error: Extension "' + name + '" is already registered.');
+    throw Error('Error: Extension "' + name + '" is already registered.');
   }
-  if (!goog.isFunction(initFn)) {
-    throw new Error('Error: Extension "' + name + '" must be a function');
+  if (typeof initFn != 'function') {
+    throw Error('Error: Extension "' + name + '" must be a function');
   }
   Blockly.Extensions.ALL_[name] = initFn;
 };
@@ -71,6 +73,9 @@ Blockly.Extensions.register = function(name, initFn) {
  *     registered.
  */
 Blockly.Extensions.registerMixin = function(name, mixinObj) {
+  if (!mixinObj || typeof mixinObj != 'object'){
+    throw Error('Error: Mixin "' + name + '" must be a object');
+  }
   Blockly.Extensions.register(name, function() {
     this.mixin(mixinObj);
   });
@@ -83,8 +88,8 @@ Blockly.Extensions.registerMixin = function(name, mixinObj) {
  * decompose are defined on the mixin.
  * @param {string} name The name of this mutator extension.
  * @param {!Object} mixinObj The values to mix in.
- * @param {(function())=} opt_helperFn An optional function to apply after mixing
- *     in the object.
+ * @param {(function())=} opt_helperFn An optional function to apply after
+ *     mixing in the object.
  * @param {Array.<string>=} opt_blockList A list of blocks to appear in the
  *     flyout of the mutator dialog.
  * @throws {Error} if the mutation is invalid or can't be applied to the block.
@@ -94,16 +99,16 @@ Blockly.Extensions.registerMutator = function(name, mixinObj, opt_helperFn,
   var errorPrefix = 'Error when registering mutator "' + name + '": ';
 
   // Sanity check the mixin object before registering it.
-  Blockly.Extensions.checkHasFunction_(errorPrefix, mixinObj.domToMutation,
-                                       'domToMutation');
-  Blockly.Extensions.checkHasFunction_(errorPrefix, mixinObj.mutationToDom,
-                                       'mutationToDom');
+  Blockly.Extensions.checkHasFunction_(
+      errorPrefix, mixinObj.domToMutation, 'domToMutation');
+  Blockly.Extensions.checkHasFunction_(
+      errorPrefix, mixinObj.mutationToDom, 'mutationToDom');
 
-  var hasMutatorDialog = Blockly.Extensions.checkMutatorDialog_(mixinObj,
-    errorPrefix);
+  var hasMutatorDialog =
+      Blockly.Extensions.checkMutatorDialog_(mixinObj, errorPrefix);
 
-  if (opt_helperFn && !goog.isFunction(opt_helperFn)) {
-    throw new Error('Extension "' + name + '" is not a function');
+  if (opt_helperFn && (typeof opt_helperFn != 'function')) {
+    throw Error('Extension "' + name + '" is not a function');
   }
 
   // Sanity checks passed.
@@ -130,8 +135,8 @@ Blockly.Extensions.registerMutator = function(name, mixinObj, opt_helperFn,
  */
 Blockly.Extensions.apply = function(name, block, isMutator) {
   var extensionFn = Blockly.Extensions.ALL_[name];
-  if (!goog.isFunction(extensionFn)) {
-    throw new Error('Error: Extension "' + name + '" not found.');
+  if (typeof extensionFn != 'function') {
+    throw Error('Error: Extension "' + name + '" not found.');
   }
   if (isMutator) {
     // Fail early if the block already has mutation properties.
@@ -148,8 +153,8 @@ Blockly.Extensions.apply = function(name, block, isMutator) {
     Blockly.Extensions.checkBlockHasMutatorProperties_(errorPrefix, block);
   } else {
     if (!Blockly.Extensions.mutatorPropertiesMatch_(mutatorProperties, block)) {
-      throw new Error('Error when applying extension "' + name +
-          '": mutation properties changed when applying a non-mutator extension.');
+      throw Error('Error when applying extension "' + name + '": ' +
+          'mutation properties changed when applying a non-mutator extension.');
     }
   }
 };
@@ -165,11 +170,11 @@ Blockly.Extensions.apply = function(name, block, isMutator) {
 Blockly.Extensions.checkHasFunction_ = function(errorPrefix, func,
     propertyName) {
   if (!func) {
-    throw new Error(errorPrefix +
+    throw Error(errorPrefix +
         'missing required property "' + propertyName + '"');
   } else if (typeof func != 'function') {
-    throw new Error(errorPrefix +
-      '" required property "' + propertyName + '" must be a function');
+    throw Error(errorPrefix +
+        '" required property "' + propertyName + '" must be a function');
   }
 };
 
@@ -186,7 +191,7 @@ Blockly.Extensions.checkHasFunction_ = function(errorPrefix, func,
 Blockly.Extensions.checkNoMutatorProperties_ = function(mutationName, block) {
   var properties = Blockly.Extensions.getMutatorProperties_(block);
   if (properties.length) {
-    throw new Error('Error: tried to apply mutation "' + mutationName +
+    throw Error('Error: tried to apply mutation "' + mutationName +
         '" to a block that already has mutator functions.' +
         '  Block id: ' + block.id);
   }
@@ -209,16 +214,16 @@ Blockly.Extensions.checkMutatorDialog_ = function(object, errorPrefix) {
   var hasDecompose = object.decompose !== undefined;
 
   if (hasCompose && hasDecompose) {
-    if (typeof object.compose !== 'function') {
-      throw new Error(errorPrefix + 'compose must be a function.');
-    } else if (typeof object.decompose !== 'function') {
-      throw new Error(errorPrefix + 'decompose must be a function.');
+    if (typeof object.compose != 'function') {
+      throw Error(errorPrefix + 'compose must be a function.');
+    } else if (typeof object.decompose != 'function') {
+      throw Error(errorPrefix + 'decompose must be a function.');
     }
     return true;
   } else if (!hasCompose && !hasDecompose) {
     return false;
   } else {
-    throw new Error(errorPrefix +
+    throw Error(errorPrefix +
         'Must have both or neither of "compose" and "decompose"');
   }
 };
@@ -232,11 +237,11 @@ Blockly.Extensions.checkMutatorDialog_ = function(object, errorPrefix) {
  */
 Blockly.Extensions.checkBlockHasMutatorProperties_ = function(errorPrefix,
     block) {
-  if (typeof block.domToMutation !== 'function') {
-    throw new Error(errorPrefix + 'Applying a mutator didn\'t add "domToMutation"');
+  if (typeof block.domToMutation != 'function') {
+    throw Error(errorPrefix + 'Applying a mutator didn\'t add "domToMutation"');
   }
-  if (typeof block.mutationToDom !== 'function') {
-    throw new Error(errorPrefix + 'Applying a mutator didn\'t add "mutationToDom"');
+  if (typeof block.mutationToDom != 'function') {
+    throw Error(errorPrefix + 'Applying a mutator didn\'t add "mutationToDom"');
   }
 
   // A block with a mutator isn't required to have a mutation dialog, but
@@ -280,19 +285,16 @@ Blockly.Extensions.getMutatorProperties_ = function(block) {
  * @private
  */
 Blockly.Extensions.mutatorPropertiesMatch_ = function(oldProperties, block) {
-  var match = true;
   var newProperties = Blockly.Extensions.getMutatorProperties_(block);
   if (newProperties.length != oldProperties.length) {
-    match = false;
-  } else {
-    for (var i = 0; i < newProperties.length; i++) {
-      if (oldProperties[i] != newProperties[i]) {
-        match = false;
-      }
+    return false;
+  }
+  for (var i = 0; i < newProperties.length; i++) {
+    if (oldProperties[i] != newProperties[i]) {
+      return false;
     }
   }
-
-  return match;
+  return true;
 };
 
 /**
@@ -310,11 +312,12 @@ Blockly.Extensions.mutatorPropertiesMatch_ = function(oldProperties, block) {
  * reported as warnings in the console, and are never fatal.
  * @param {string} dropdownName The name of the field whose value is the key
  *     to the lookup table.
- * @param {!Object<string, string>} lookupTable The table of field values to
+ * @param {!Object.<string, string>} lookupTable The table of field values to
  *     tooltip text.
  * @return {Function} The extension function.
  */
-Blockly.Extensions.buildTooltipForDropdown = function(dropdownName, lookupTable) {
+Blockly.Extensions.buildTooltipForDropdown = function(dropdownName,
+    lookupTable) {
   // List of block types already validated, to minimize duplicate warnings.
   var blockTypesChecked = [];
 
@@ -322,10 +325,10 @@ Blockly.Extensions.buildTooltipForDropdown = function(dropdownName, lookupTable)
   // Wait for load, in case Blockly.Msg is not yet populated.
   // runAfterPageLoad() does not run in a Node.js environment due to lack of
   // document object, in which case skip the validation.
-  if (document) { // Relies on document.readyState
+  if (typeof document == 'object') {  // Relies on document.readyState
     Blockly.utils.runAfterPageLoad(function() {
       for (var key in lookupTable) {
-        // Will print warnings is reference is missing.
+        // Will print warnings if reference is missing.
         Blockly.utils.checkMessageReferences(lookupTable[key]);
       }
     });
@@ -338,7 +341,7 @@ Blockly.Extensions.buildTooltipForDropdown = function(dropdownName, lookupTable)
   var extensionFn = function() {
     if (this.type && blockTypesChecked.indexOf(this.type) === -1) {
       Blockly.Extensions.checkDropdownOptionsInTable_(
-        this, dropdownName, lookupTable);
+          this, dropdownName, lookupTable);
       blockTypesChecked.push(this.type);
     }
 
@@ -347,7 +350,7 @@ Blockly.Extensions.buildTooltipForDropdown = function(dropdownName, lookupTable)
       var tooltip = lookupTable[value];
       if (tooltip == null) {
         if (blockTypesChecked.indexOf(this.type) === -1) {
-          // Warn for missing values on generated tooltips
+          // Warn for missing values on generated tooltips.
           var warning = 'No tooltip mapping for value ' + value +
               ' of field ' + dropdownName;
           if (this.type != null) {
@@ -369,59 +372,60 @@ Blockly.Extensions.buildTooltipForDropdown = function(dropdownName, lookupTable)
  * Emits console warnings when they are not.
  * @param {!Blockly.Block} block The block containing the dropdown
  * @param {string} dropdownName The name of the dropdown
- * @param {!Object<string, string>} lookupTable The string lookup table
+ * @param {!Object.<string, string>} lookupTable The string lookup table
  * @private
  */
-Blockly.Extensions.checkDropdownOptionsInTable_ =
-  function(block, dropdownName, lookupTable) {
-    // Validate all dropdown options have values.
-    var dropdown = block.getField(dropdownName);
-    if (!dropdown.isOptionListDynamic()) {
-      var options = dropdown.getOptions();
-      for (var i = 0; i < options.length; ++i) {
-        var optionKey = options[i][1]; // label, then value
-        if (lookupTable[optionKey] == null) {
-          console.warn('No tooltip mapping for value ' + optionKey +
-            ' of field ' + dropdownName + ' of block type ' + block.type);
-        }
+Blockly.Extensions.checkDropdownOptionsInTable_ = function(block, dropdownName,
+    lookupTable) {
+  // Validate all dropdown options have values.
+  var dropdown = block.getField(dropdownName);
+  if (!dropdown.isOptionListDynamic()) {
+    var options = dropdown.getOptions();
+    for (var i = 0; i < options.length; ++i) {
+      var optionKey = options[i][1];  // label, then value
+      if (lookupTable[optionKey] == null) {
+        console.warn('No tooltip mapping for value ' + optionKey +
+          ' of field ' + dropdownName + ' of block type ' + block.type);
       }
     }
-  };
+  }
+};
 
 /**
  * Builds an extension function that will install a dynamic tooltip. The
  * tooltip message should include the string '%1' and that string will be
- * replaced with the value of the named field.
+ * replaced with the text of the named field.
  * @param {string} msgTemplate The template form to of the message text, with
  *     %1 placeholder.
- * @param {string} fieldName The field with the replacement value.
+ * @param {string} fieldName The field with the replacement text.
  * @returns {Function} The extension function.
  */
-Blockly.Extensions.buildTooltipWithFieldValue =
-  function(msgTemplate, fieldName) {
-    // Check the tooltip string messages for invalid references.
-    // Wait for load, in case Blockly.Msg is not yet populated.
-    // runAfterPageLoad() does not run in a Node.js environment due to lack of
-    // document object, in which case skip the validation.
-    if (document) { // Relies on document.readyState
-      Blockly.utils.runAfterPageLoad(function() {
-        // Will print warnings is reference is missing.
-        Blockly.utils.checkMessageReferences(msgTemplate);
-      });
-    }
+Blockly.Extensions.buildTooltipWithFieldText = function(msgTemplate,
+    fieldName) {
+  // Check the tooltip string messages for invalid references.
+  // Wait for load, in case Blockly.Msg is not yet populated.
+  // runAfterPageLoad() does not run in a Node.js environment due to lack of
+  // document object, in which case skip the validation.
+  if (typeof document == 'object') {  // Relies on document.readyState
+    Blockly.utils.runAfterPageLoad(function() {
+      // Will print warnings if reference is missing.
+      Blockly.utils.checkMessageReferences(msgTemplate);
+    });
+  }
 
-    /**
-     * The actual extension.
-     * @this {Blockly.Block}
-     */
-    var extensionFn = function() {
-      this.setTooltip(function() {
-        return Blockly.utils.replaceMessageReferences(msgTemplate)
-            .replace('%1', this.getFieldValue(fieldName));
-      }.bind(this));
-    };
-    return extensionFn;
+  /**
+   * The actual extension.
+   * @this {Blockly.Block}
+   */
+  var extensionFn = function() {
+    this.setTooltip(function() {
+      var field = this.getField(fieldName);
+      return Blockly.utils.replaceMessageReferences(msgTemplate)
+          .replace('%1', field ? field.getText() : '');
+    }.bind(this));
   };
+  return extensionFn;
+};
 
 /**
  * Configures the tooltip to mimic the parent block when connected. Otherwise,
@@ -435,10 +439,8 @@ Blockly.Extensions.extensionParentTooltip_ = function() {
   this.tooltipWhenNotConnected_ = this.tooltip;
   this.setTooltip(function() {
     var parent = this.getParent();
-    return (parent &&
-      parent.getInputsInline() &&
-      parent.tooltip) ||
-      this.tooltipWhenNotConnected_;
+    return (parent && parent.getInputsInline() && parent.tooltip) ||
+        this.tooltipWhenNotConnected_;
   }.bind(this));
 };
 Blockly.Extensions.register('parent_tooltip_when_inline',
